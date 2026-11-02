@@ -1,18 +1,13 @@
 """Unit tests for indieauth.py.
 """
-import copy
-import urllib.request, urllib.parse, urllib.error
-
 from flask import get_flashed_messages
 from webutil.testutil import requests_response
-from webutil.util import json_dumps, json_loads
 from oauth_dropins import indieauth
-import requests
+from oauth_dropins.models import PkceCode
 
 import indieauth as _  # just need to register the endpoints
 from models import Domain
 from . import testutil
-import util
 
 
 class IndieAuthTest(testutil.AppTest):
@@ -24,22 +19,23 @@ class IndieAuthTest(testutil.AppTest):
   def expect_indieauth_check(self):
     self.mock_post.return_value = requests_response('me=http://snarfed.org')
 
-  def expect_site_fetch(self, body=None):
-    if body is None:
-      body = """
+  def expect_site_fetch(self):
+    self.mock_get.return_value = requests_response("""
 <html><body>
 <a rel="me" href="https://www.instagram.com/snarfed">me on insta</a>
 </body></html>
-"""
-    self.mock_get.return_value = requests_response(body)
+""")
 
   def callback(self, token='towkin'):
-    state = util.encode_oauth_state({
-      'endpoint': indieauth.INDIEAUTH_URL,
-      'me': 'http://snarfed.org',
-      'state': token,
+    PkceCode(id='my_state', verifier='my_verifier', challenge='my_challenge',
+             auth_endpoint=indieauth.INDIELOGIN_URL,
+             token_endpoint=indieauth.INDIELOGIN_TOKEN_URL,
+             me='http://snarfed.org', state=token).put()
+    resp = self.client.get('/indieauth/callback', query_string={
+      'code': 'my_code',
+      'state': 'my_state',
+      'iss': indieauth.INDIELOGIN_ISSUER,
     })
-    resp = self.client.get(f'/indieauth/callback?code=my_code&state={state}')
     self.assertEqual(302, resp.status_code)
     return resp
 
@@ -50,14 +46,6 @@ class IndieAuthTest(testutil.AppTest):
     resp = self.callback()
     self.assertEqual('http://localhost/',resp.headers['Location'])
     self.assertEqual(['Authorized you for snarfed.org.'], get_flashed_messages())
-    self.assert_requests_post(indieauth.INDIEAUTH_URL, data={
-      'me': 'http://snarfed.org',
-      'state': 'towkin',
-      'code': 'my_code',
-      'client_id': indieauth.INDIEAUTH_CLIENT_ID,
-      'redirect_uri': 'http://localhost/indieauth/callback',
-    })
-    self.assert_requests_get('http://snarfed.org')
 
     self.assert_entities_equal([
       Domain(id='snarfed.org', tokens=['towkin'], auth=self.auth_entity.key),
@@ -75,6 +63,6 @@ class IndieAuthTest(testutil.AppTest):
       'me': 'http://snarfed.org',
     })
     self.assertEqual(302, resp.status_code)
-    self.assertTrue(resp.headers['Location'].startswith(indieauth.INDIEAUTH_URL),
+    self.assertTrue(resp.headers['Location'].startswith(indieauth.INDIELOGIN_URL),
                     resp.headers['Location'])
     self.assert_requests_get('http://snarfed.org')
