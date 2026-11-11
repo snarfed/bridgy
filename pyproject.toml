@@ -12,10 +12,10 @@ app = [
     # our own packages, used at head via the editable local checkouts in
     # [tool.uv.sources]; the deploy-time git refs are in requirements.txt
     'flask-gae-static',
-    'granary',
+    'granary[bluesky,flickr,reddit,twitter]',
     'lexrpc[flask]',
     'mf2util',
-    'oauth-dropins',
+    'oauth-dropins[bluesky,flickr,indieauth,reddit,tumblr,twitter]',
     'pywebutil[google-cloud,html]',
 
     # third-party
@@ -27,6 +27,7 @@ app = [
     'grpcio>=1.59.0',
     'gunicorn>=20.1.0',
     'humanize>=4.0',
+    'lxml>=6.0',
     'prawcore>=2.1',
     'requests>=2.22',
     'requests-oauth2client>=1.8.0',
@@ -67,9 +68,10 @@ extend_exclude = ['docs', 'scripts']
 
 [tool.deptry.per_rule_ignores]
 # these deps aren't imported directly but we still need them: gunicorn (WSGI
-# server), ujson
+# server), lxml (webutil.appengine_config's BeautifulSoup parser), ujson
 DEP002 = [
     'gunicorn',
+    'lxml',
     'sphinx',
     'sphinx-rtd-theme',
     'ujson',
