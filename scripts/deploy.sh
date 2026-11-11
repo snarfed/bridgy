@@ -15,6 +15,10 @@ cd ../webutil
 source .venv/bin/activate
 python -m unittest discover --pattern="test_*.py"
 
+cd ../oauth-dropins
+source .venv/bin/activate
+python -m unittest discover
+
 cd ../granary
 source .venv/bin/activate
 python -m unittest discover
@@ -38,4 +42,4 @@ md5sum -c keys.md5
 
 # deploy!
 # https://cloud.google.com/sdk/gcloud/reference/app/deploy
-gcloud -q beta app deploy --no-cache --project brid-gy *.yaml
+gcloud -q app deploy --no-cache --no-promote --project brid-gy *.yaml
