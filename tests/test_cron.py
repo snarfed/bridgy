@@ -9,7 +9,6 @@ from granary.tests import test_flickr
 from granary.tests import test_mastodon
 import oauth_dropins.flickr
 import oauth_dropins.flickr_auth
-from oauth_dropins import indieauth
 import oauth_dropins.mastodon
 from webutil.testutil import requests_response, UrlopenResult
 from webutil.util import json_dumps, json_loads

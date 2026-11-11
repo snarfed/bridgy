@@ -15,7 +15,7 @@ app = [
     'granary[bluesky,flickr,reddit,twitter]',
     'lexrpc[flask]',
     'mf2util',
-    'oauth-dropins[bluesky,flickr,indieauth,reddit,tumblr,twitter]',
+    'oauth-dropins[bluesky,flickr,reddit,tumblr,twitter]',
     'pywebutil[google-cloud,html]',
 
     # third-party

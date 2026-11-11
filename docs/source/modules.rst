@@ -33,10 +33,6 @@ handlers
 --------
 .. automodule:: handlers
 
-indieauth
----------
-.. automodule:: indieauth
-
 instagram
 ---------
 .. automodule:: instagram
