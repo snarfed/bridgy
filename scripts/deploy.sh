@@ -42,4 +42,4 @@ md5sum -c keys.md5
 
 # deploy!
 # https://cloud.google.com/sdk/gcloud/reference/app/deploy
-gcloud -q app deploy --no-cache --no-promote --project brid-gy *.yaml
+gcloud -q app deploy --no-cache --project brid-gy *.yaml
