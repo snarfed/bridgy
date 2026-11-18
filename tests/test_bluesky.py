@@ -181,7 +181,7 @@ class BlueskyTest(testutil.AppTest):
         'http://localhost/publish/bluesky/finish',
       ],
       'response_types': ['code'],
-      'scope': 'atproto transition:generic',
+      'scope': 'atproto',
       'token_endpoint_auth_method': 'none',
     }, resp.get_json())
 
