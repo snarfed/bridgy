@@ -28,7 +28,7 @@ app.after_request(flask_util.default_modern_headers)
 app.post(flask_util.CSP_REPORT_PATH)(flask_util.csp_report)
 app.register_error_handler(Exception, flask_util.handle_exception)
 app.before_request(flask_util.canonicalize_domain(
-  util.OTHER_DOMAINS, util.PRIMARY_DOMAIN))
+  util.PRIMARY_DOMAIN, from_domains=util.OTHER_DOMAINS))
 if appengine_info.LOCAL_SERVER and not appengine_info.TESTING:
   flask_gae_static.init_app(app)
 
